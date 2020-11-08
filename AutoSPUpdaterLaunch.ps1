@@ -58,7 +58,6 @@ else
 }
 
 $servicesToStop = ("SPTimerV4","SPSearch4","OSearch14","OSearch15","OSearch16","SPSearchHostController")
-# Same set of services, just in a slightly different order
 $servicesToStart = ("SPSearchHostController","OSearch14","OSearch15","OSearch16","SPTimerV4","SPSearch4")
 
 #region Check If Admin
