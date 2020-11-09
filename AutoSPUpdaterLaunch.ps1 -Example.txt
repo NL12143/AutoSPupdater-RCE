@@ -1,0 +1,21 @@
+
+$RunPath = "\\P3000838\D$\Install\AutoSPupdater\"
+$RunPath = "\\P3000838\D$\Install\AutoSPinstaller\SP\Automation\"
+$RunPath = "D:\Install\AutoSPinstaller\SP\Automation\"
+Set-Location $RunPath 
+
+$PatchPath = "\\P3000838\D$\Install\Patches\CUokt2020\"
+.\AutoSPUpdaterLaunch.ps1 -patchPath $PatchPath -remoteAuthPassword fuzzyBunny99
+
+ToDo for @DNB:  
+Avoid ClearCache Make -option default $false 
+Add reboot after PSconfig -option default $false
+
+Set Status.html 
+Encryp password (input for credSSP) 
+Delay start search (en srevices ?) until end PSconfig 
+Check SPcache in C:\ProgramData\Microsoft\SharePoint\Config 
+https://admin.sharepoint.dnbad.nl/_admin/UpgradeStatus.aspx
+https://admin.sharepoint.dnbad.nl/_admin/PatchStatus.aspx
+https://admin.sharepoint.dnbad.nl/_admin/DatabaseStatus.aspx
+ 
