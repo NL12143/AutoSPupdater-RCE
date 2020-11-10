@@ -1,4 +1,5 @@
-﻿
+https://docs.microsoft.com/en-us/troubleshoot/azure/virtual-machines/credssp-encryption-oracle-remediation
+ 
 # Configures the server for WinRM and WSManCredSSP
 Write-Host -ForegroundColor White " - Configuring PowerShell remoting..."
 $winRM = Get-Service -Name winrm
