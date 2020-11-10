@@ -1,0 +1,38 @@
+Moet kunnen en mogen: 
+Kunnen: WinRM service running, Enable-PSremoting (
+Mogen: Credential delagetion= CredSSP, Oracle remediation Security level, patch level 
+
+#Origin Client  
+winrm quickconfig 
+winrm set winrm/config/client @{TrustedHosts="*"}
+Winrm get winrm/config/client
+
+#Target 
+winrm quickconfig 
+
+#Double hop 
+Enable-WSManCredSSP -Role Client -Delegate *.dnbad.nl
+Enable-WSManCredSSP -Role Server  -Force
+
+
+
+
+
+Get-WSManCredSSP confirmed my server was ready to accept credentials from a client:
+The machine is not configured to allow delegating fresh credentials.
+This computer is configured to receive credentials from a remote client computer
+
+
+A computer policy does not allow the delegation of the user credentials to the target computer. 
+Use gpedit.msc and look at the following policy: 
+Computer Configuration -> Administrative Templates -> System -> Credentials Delegation -> Allow Delegating Fresh Credentials. 
+Verify that it is enabled and configured with an SPN appropriate for the target computer. 
+
+In order to use CredSSP, you need to 
+enable fresh credential delegation from your client, and 
+enable receiving credentials on the server. 
+In your instance, your remote computers will be your clients, 
+and the system that holds the UNC share will be you server
+
+User > PC >>>>>> Server > Share 
+Clients   >>>>>> Server 
