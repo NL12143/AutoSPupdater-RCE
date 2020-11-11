@@ -1,7 +1,9 @@
+#AutoSPUpdaterModule.psm1
 #https://raw.githubusercontent.com/brianlala/AutoSPUpdater/master/AutoSPUpdaterModule.psm1
 
-#region Install Updates
+#region INSTALL-UUPDATE
 
+#region InstallUpdatesFromPatchPath
 Function InstallUpdatesFromPatchPath
 {
     [CmdletBinding()]
@@ -94,6 +96,7 @@ Function InstallUpdatesFromPatchPath
     Write-Host -ForegroundColor Black -BackgroundColor Green "$env:COMPUTERNAME"
     WriteLine
 }
+#region InstallUpdatesFromPatchPath
 
 #region Install-Remote INFO
 <#
@@ -111,6 +114,8 @@ Start-Process -FilePath "$PSHOME\powershell.exe"
 }
 #>
 #endregion Install-Remote INFO
+
+#region Install-Remote
 function Install-Remote
 {
     [CmdletBinding()]
@@ -144,7 +149,9 @@ function Install-Remote
         }
     }
     Write-Host -ForegroundColor White " - Starting remote installs..."
-#   Enable-CredSSP $remoteFarmServers # not needed 
+#endRegion Install-Remote
+
+#region Enable-CredSSP $remoteFarmServers # not needed 
     foreach ($server in $remoteFarmServers)
     {
         if (!($skipParallelInstall)) # Launch each farm server install simultaneously
@@ -178,6 +185,8 @@ function Install-Remote
         }
     }
 }
+#endregion Enable-CredSSP $remoteFarmServers # not needed 
+#endRegion Install-Remote
 
 #region Start-RemoteUpdate INFO
 <#
@@ -225,12 +234,13 @@ Function Start-RemoteUpdate
     Invoke-Command -ScriptBlock {param ($value) Set-Variable -Name credential -Value $value} -ArgumentList $credential -Session $session
     Invoke-Command -ScriptBlock {param ($value) Set-Variable -Name verboseParameter -Value $value} -ArgumentList $verboseParameter -Session $session
     Write-Host -ForegroundColor White " - Launching AutoSPUpdater..."
-    Invoke-Command -ScriptBlock {& "$launchPath\AutoSPUpdaterLaunch.ps1" -patchPath $patchPath -remoteAuthPassword $(ConvertFrom-SecureString $($credential.Password)) @verboseParameter} -Session $session
+    $pwd = $(ConvertFrom-SecureString $($credential.Password))
+    Invoke-Command -ScriptBlock {& "$launchPath\AutoSPUpdaterLaunch.ps1" -patchPath $patchPath -remoteAuthPassword $pwd @verboseParameter} -Session $session 
     Write-Host -ForegroundColor White " - Removing session `"$($session.Name)...`""
     Remove-PSSession $session
 }
 
-#endregion InstallUpdates 
+#region INSTALL-UUPDATE
 
 Function Update-ContentDatabases
 Example 
@@ -287,7 +297,7 @@ Example
     Write-Host -ForegroundColor White " - Done upgrading databases."
 }
 
-#region UtilityFunctions
+#region Utility-Functions
 
 Function Pause($action, $key) 
 #http://www.microsoft.com/technet/scriptcenter/resources/pstips/jan08/pstip0118.mspx
@@ -646,4 +656,4 @@ Function Get-SPYear
     }
     return $spVer, $spYear
 }
-#endregion Functions 
+#endRegion Utility-Functions
