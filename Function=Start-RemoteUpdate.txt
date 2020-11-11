@@ -1,0 +1,20 @@
+AutoSPUpdaterModule.psm1
+
+Start from Function Start-RemoteUpdate  
+$server, $plainPass, $launchPath, $patchPath, $spVer
+    $session = New-PSSession 
+    -Name "AutoSPUpdaterSession-$server" 
+    -Authentication Credssp 
+    -Credential $credential 
+    -ComputerName $server
+    Invoke-Command -ScriptBlock 
+        {
+        & "$launchPath\AutoSPUpdaterLaunch.ps1" 
+        -Session $session 
+        -patchPath $patchPath 
+        -remoteAuthPassword $pass 
+        @verboseParameter} 
+        }
+    Remove-PSSession $session
+}
+

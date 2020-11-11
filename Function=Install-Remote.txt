@@ -1,0 +1,35 @@
+From AutoSPUpdaterLaunch.ps1 
+
+Install-Remote.txt  
+
+foreach ($server in $remoteFarmServers)
+$versionSwitch = "" 
+Start-Process 
+    -FilePath "$PSHOME\powershell.exe" 
+    -ArgumentList "$versionSwitch `
+    -ExecutionPolicy Bypass 
+
+    Invoke-Command -ScriptBlock 
+    {
+    Import-Module -Name `"$launchPath\AutoSPUpdaterModule.psm1`" -DisableNameChecking -Global -Force `
+    StartTracing -Server $server; `
+    Test-ServerConnection -Server $server; `
+    Start-RemoteUpdate -Server $server -plainPass $path -launchPath `"$launchPath`" -patchPath `"$patchPath`" -spVer $spver $verboseSwitch; `
+    Pause `"exit`"; `
+    Stop-Transcript -ErrorAction SilentlyContinue}" -Verb Runas
+    Start-Sleep 10
+    }
+
+
+else # Launch each farm server install in sequence, one-at-a-time, or run these steps on the current $targetServer
+{
+    WriteLine
+    Write-Host -ForegroundColor Green " - Server: $server"
+    Import-Module -Name "$launchPath\AutoSPUpdaterModule.psm1" -DisableNameChecking -Global -Force
+    Test-ServerConnection -Server $server
+    # Enable-RemoteSession -Server $server -Password $(ConvertFrom-SecureString $($credential.Password)) -launchPath $launchPath; `
+    InstallUpdatesFromPatchPath `
+}
+
+
+

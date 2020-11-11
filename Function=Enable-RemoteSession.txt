@@ -1,0 +1,50 @@
+
+Use Enable-RemoteSession -Server $server -Password $pass -launchPath $launchPath; 
+$server, $plainPass, $launchPath
+
+Runs AutoSPUpdaterConfigureRemoteTarget.ps1 using PsExec.exe 
+Only required one. Not every run 
+Checks for PsExec.exe. When not found; downloading..."
+$psExecUrl = "http://live.sysinternals.com/PsExec.exe"
+
+Function Enable-RemoteSession
+{
+    [CmdletBinding()]
+    param
+    (
+        [String]$server,
+        [String]$plainPass,
+        [String]$launchPath
+    )
+
+    #Check for credentials 
+    If ($plainPass) {$credential = New-Object System.Management.Automation.PsCredential $env:USERDOMAIN\$env:USERNAME,$(ConvertTo-SecureString $plainPass)}
+    If (!$credential) {$credential = $host.ui.PromptForCredential("AutoSPUpdater - Remote Install", "Re-Enter Credentials for Remote Authentication:", "$env:USERDOMAIN\$env:USERNAME", "NetBiosUserName")}
+    $username = $credential.Username
+    $password = ConvertTo-PlainText $credential.Password
+
+    $configureTargetScript = "$launchPath\AutoSPUpdaterConfigureRemoteTarget.ps1"
+    $psExec = $launchPath+"\PsExec.exe"
+
+    If (!(Get-Item ($psExec) -ErrorAction SilentlyContinue))
+    {
+        Write-Host -ForegroundColor White " - PsExec.exe not found; downloading..."
+        $psExecUrl = "http://live.sysinternals.com/PsExec.exe"
+        Import-Module BitsTransfer | Out-Null
+        Start-BitsTransfer -Source $psExecUrl -Destination $psExec -DisplayName "Downloading Sysinternals PsExec..." -Priority Foreground -Description "From $psExecUrl..." -ErrorVariable err
+        If ($err) {Write-Warning "Could not download PsExec!"; Pause "exit"; break}
+    }
+
+    Write-Host -ForegroundColor White " - Updating PowerShell execution policy on `"$server`" via PsExec..."
+    Start-Process -FilePath "$psExec" `
+                  -ArgumentList "/acceptEula \\$server -h powershell.exe -Command `"try {Set-ExecutionPolicy Bypass -Force} catch {}; Stop-Process -Id `$PID`"" `
+                  -Wait -NoNewWindow
+    # Another way to exit powershell when running over PsExec from http://www.leeholmes.com/blog/2007/10/02/using-powershell-and-PsExec-to-invoke-expressions-on-remote-computers/
+    # PsExec \\server cmd /c "echo . | powershell {command}"
+    Write-Host -ForegroundColor White " - Enabling PowerShell remoting on `"$server`" via PsExec..."
+    Write-Verbose -Message "Running '$psexec /acceptEula \\$server -u $username -p $password -h powershell.exe -Command `"$configureTargetScript`"..."
+    Start-Process -FilePath "$psExec" `
+                  -ArgumentList "/acceptEula \\$server -u $username -p $password -h powershell.exe -Command `"$configureTargetScript`"" `
+                  -Wait -NoNewWindow
+
+}

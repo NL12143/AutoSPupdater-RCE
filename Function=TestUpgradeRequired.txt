@@ -1,0 +1,28 @@
+
+$setupType = (Get-Item -Path "HKLM:\SOFTWARE\Microsoft\Shared Tools\Web Server Extensions\$spVer.0\WSS\").GetValue("SetupType")
+$setupType
+
+If ($setupType -ne "CLEAN_INSTALL") 
+# For example, if the value is "B2B_UPGRADE"
+
+
+Function Test-UpgradeRequired
+{
+    if ($null -eq $spVer)
+    {
+        $spVer = (Get-SPFarm).BuildVersion.Major
+        if (!$?)
+        {
+            throw "Could not determine version of farm."
+        }
+    }
+    $setupType = (Get-Item -Path "HKLM:\SOFTWARE\Microsoft\Shared Tools\Web Server Extensions\$spVer.0\WSS\").GetValue("SetupType")
+    If ($setupType -ne "CLEAN_INSTALL") # For example, if the value is "B2B_UPGRADE"
+    {
+        Return $true
+    }
+    Else
+    {
+        Return $false
+    }
+}

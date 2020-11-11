@@ -1,0 +1,90 @@
+$spVer,$spYear = Get-SPYear
+@verboseParameter
+$farmServers = (Get-SPFarm).Servers | Where-Object {$_.Role -ne "Invalid"}
+
+$rolesPerServer = @{}
+$farmServers | ForEach-Object {$rolesPerServer.Add($_.Name,"$($_.Role)")}
+$rolesPerServer
+
+
+AutoSPudater.ps1 
+.\AutoSPUpdaterLaunch.ps1 -patchPath "C:\SP\2013\Updates"
+    InstallRemote 
+    foreach ($server in $remoteFarmServers)
+    {
+        $versionSwitch = "" 
+        Start-Process 
+            -FilePath "$PSHOME\powershell.exe" 
+            -ArgumentList "$versionSwitch `
+            -ExecutionPolicy Bypass 
+            Invoke-Command -ScriptBlock 
+            {
+            Import-Module -Name `"$launchPath\AutoSPUpdaterModule.psm1`" -DisableNameChecking -Global -Force `
+            Test-ServerConnection -Server $server; `
+            Start-RemoteUpdate -Server $server -plainPass $path -launchPath `"$launchPath`" -patchPath `"$patchPath`" -spVer $spver $verboseSwitch; `
+            Pause `"exit`"; `
+            Start-Sleep 10
+            }
+    }     
+
+Start-RemoteUpdate > Open session to $server, Run UpdaterLaunch.ps1 
+    -server $server 
+    -plainPass $path 
+    -launchPath `"$launchPath`" 
+    -patchPath `"$patchPath`" 
+    -spVer $spver 
+    $verboseSwitch; `
+    $session = New-PSSession -Name "AutoSPUpdaterSession-$server" -Authentication Credssp -Credential $credential -ComputerName $server
+    Invoke-Command -Session $session -ScriptBlock 
+    {
+        & "$launchPath\AutoSPUpdaterLaunch.ps1" 
+        -patchPath $patchPath 
+        -remoteAuthPassword 
+         @verboseParameter
+         } 
+    Remove-PSSession $session
+
+
+
+
+if ($farmservers | Where-Object {$_ -match $env:COMPUTERNAME}) 
+{
+    try
+    {
+        # We only want to Install-Remote if we aren't already *in* a remote session, 
+        # and if there are actually remote servers to install!
+        if ((Confirm-LocalSession) -and !([string]::IsNullOrEmpty($remoteFarmServers)))
+        {
+            Write-Verbose -Message "Kicking off remote installs..."
+            Install-Remote 
+            -skipParallelInstall:$skipParallelInstall 
+            -remoteFarmServers $remoteFarmServers 
+            -credential  $credential 
+            -launchPath "$launchPath" 
+            -patchPath  "$patchPath" @verboseParameter
+        }
+    }
+
+    Invoke-Command -ScriptBlock {
+    & "$launchPath\AutoSPUpdaterLaunch.ps1" 
+    -session $session 
+    -patchPath $patchPath 
+    -remoteAuthPassword $pass 
+
+$PSConfig = "$env:CommonProgramFiles\Microsoft Shared\Web Server Extensions\$spVer\BIN\psconfig.exe"
+$PSConfigUI = "$env:CommonProgramFiles\Microsoft Shared\Web Server Extensions\$spVer\BIN\psconfigui.exe"
+Start-Process -FilePath $PSConfig -ArgumentList "-cmd upgrade -inplace b2b -wait -force -cmd applicationcontent -install -cmd installfeatures -cmd secureresources" -NoNewWindow -Wait @passThruParameter
+
+#region PSConfig
+Start-Process -FilePath $PSConfig -ArgumentList "-cmd upgrade -inplace b2b -wait -force -cmd applicationcontent -install -cmd installfeatures -cmd secureresources" -NoNewWindow -Wait @passThruParameter
+
+Function Start-RemoteUpdate 
+    $session = New-PSSession -Name "AutoSPUpdaterSession-$server" -Authentication Credssp -Credential $credential -ComputerName $server
+    Invoke-Command -Session $session -ScriptBlock {
+        & "$launchPath\AutoSPUpdaterLaunch.ps1" 
+        -patchPath $patchPath 
+        -remoteAuthPassword $pass  
+        @verboseParameter} 
+    
+    Remove-PSSession $session
+

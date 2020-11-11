@@ -1,0 +1,73 @@
+From AutoSPUpdaterLaunch.ps1 
+
+Get-Service -ComputerName 
+
+#Runnning AutoSPUpdaterLaunch.ps1 in a remote session 
+$session = New-Session 
+Get-Service -Session $session 
+
+$servicesToStop = ("SPTimerV4","SPSearch4","OSearch14","OSearch15","OSearch16","SPSearchHostController")
+foreach ($service in $servicesToStop)
+    if ($serviceExists -and (Get-Service $service).Status -eq "Running")
+    {
+        Write-Host -ForegroundColor White "  - Stopping service $((Get-Service -Name $service).DisplayName)..."
+    Get-Service  -Name $service -StartupType 
+    }
+
+----------------------------------------------
+#region Services-Stop-Start
+$servicesToStop = ("SPTimerV4","SPSearch4","OSearch14","OSearch15","OSearch16","SPSearchHostController")
+$servicesToStart = ("SPSearchHostController","OSearch14","OSearch15","OSearch16","SPTimerV4","SPSearch4")
+#endregion
+
+#region Start-Services #Only really need to do this for pre-SP2016
+    ForEach ($service in $servicesToStart)
+            $startupType = "Automatic"
+            Set-Service -Name $service -StartupType $startupType
+            Start-Service -Name $service
+#endregion
+
+#region Stop-Services #Only really need to do this for pre-SP2016
+if ($spVer -le 15) #pre-2016 
+{
+    Write-Host -ForegroundColor White " - Temporarily disabling and stopping services..."
+    foreach ($service in $servicesToStop)
+    {
+        $serviceExists = Get-Service $service -ErrorAction SilentlyContinue
+        if ($serviceExists -and (Get-Service $service).Status -eq "Running")
+        {
+            Write-Host -ForegroundColor White "  - Stopping service $((Get-Service -Name $service).DisplayName)..."
+            Set-Service  -Name $service -StartupType Disabled
+            Stop-Service -Name $service -Force
+            New-Variable -Name $service"WasRunning" -Value $true
+        }
+    }
+    Write-Host -ForegroundColor White " - Services are now stopped."
+}
+#endregion
+
+#region Start-Services
+# Only really need to do this for pre-SP2016
+if ($spVer -le 15)
+{
+    Write-Host -ForegroundColor White " - Re-enabling & starting services..."
+    ForEach ($service in $servicesToStart)
+    {
+        if ($service -like "OSearch*") # The OSearch* service by default has startup type "Manual" so let's keep it that way
+        {
+            $startupType = "Manual"
+        }
+        else
+        {
+            $startupType = "Automatic"
+        }
+        if ((Get-Variable -Name $service"WasRunning" -ValueOnly -ErrorAction SilentlyContinue) -eq $true)
+        {
+            Set-Service -Name $service -StartupType $startupType
+            Write-Host -ForegroundColor White "  - Starting service $((Get-Service -Name $service).DisplayName)..."
+            Start-Service -Name $service
+        }
+    }
+    Write-Host -ForegroundColor White " - Services are now started."
+}
+#endregion Start-Services

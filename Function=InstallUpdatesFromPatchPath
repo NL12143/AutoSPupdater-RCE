@@ -1,0 +1,32 @@
+
+Install-Remote ... 
+$session = New-Session 
+  Start-Process -FilePath "$updateToInstall" -ArgumentList "/passive /norestart" -LoadUserProfile
+
+
+
+
+
+Function InstallUpdatesFromPatchPath
+ 
+$patchPath, $spVer
+
+$spVer,$spYear = Get-SPyear
+
+$updatesToInstall = Get-ChildItem -Path "$patchPath" -Include office2010*.exe,ubersrv*.exe,ubersts*.exe,*pjsrv*.exe,sharepointsp2013*.exe,coreserver201*.exe,sts201*.exe,wssloc201*.exe,svrproofloc201*.exe,oserver*.exe,wac*.exe,oslpksp*.exe -Recurse -ErrorAction SilentlyContinue | Sort-Object -Descending 
+
+ForEach ($updateToInstall in $updatesToInstall) 
+{
+$splitUpdate = Split-Path -Path $updateToInstall -Leaf
+
+Start-Process -FilePath "$updateToInstall" 
+    -ArgumentList "/passive /norestart" 
+    -LoadUserProfile 
+}
+
+    Start-Process -FilePath "$updateToInstall" -ArgumentList "/passive /norestart" -LoadUserProfile
+    Show-Progress -Process $($splitUpdate -replace ".exe", "") -Color Cyan -Interval 5
+    $delta,$null = (New-TimeSpan -Start $startTime -End (Get-Date)).ToString() -split "\."
+    $oPatchInstallLog = Get-ChildItem -Path (Get-Item $env:TEMP).FullName | Where-Object {$_.Name -like "opatchinstall*.log"} | Sort-Object -Descending -Property "LastWriteTime" | Select-Object -first 1
+    # Get install result from log
+

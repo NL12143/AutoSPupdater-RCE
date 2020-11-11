@@ -1,0 +1,29 @@
+From AutoSPUpdaterLaunch.ps1 
+
+
+#region Get Farm Servers & Credentials
+$farmServers = (Get-SPFarm).Servers | Where-Object {$_.Role -ne "Invalid"}
+$farmServers
+$farmServers | Select Name 
+$farmServers.Count 
+
+$rolesPerServer = @{} # Add Server and Role to the $rolesPerServer hashtable
+$farmServers | ForEach-Object {$rolesPerServer.Add($_.Name,"$($_.Role)") } 
+
+$rolesPerServer 
+
+#endregion 
+
+#region Check path are UNC 
+if (($patchPath -like "*:*" -or $launchPath -like "*:*") -and $farmServers.Count -gt 1)
+# path are nor UNC Example: $path = "\\P30000838\D$\Install\Patch\20OKT\" 
+{
+    Write-Host "The path where updates reside ($patchPath) and/or where the script"
+    Write-Host "is being run from ($launchPath) is/are identified by a local drive letter."
+    Write-Host "You should either use a UNC path that all farm servers can access (recommended),"
+    Write-Host " - or create identical paths and copy all required files on each farm server."
+    Write-Host " - enter Ctrl-C to exit, or" 
+    Pause      "continue updating" "Y" 
+}
+#region
+

@@ -1,0 +1,41 @@
+From AutoSPUpdaterLaunch.ps1 
+
+Get-Command -Name "Unblock-File"
+
+$patchPath = "\\P3000838\D$\Install\" 
+$path = $patchPath 
+$safeHost = ($path -split "\\")[2]
+
+$safeHost
+New-Item -Name $safeHost -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Domains"  -ItemType Leaf -Force | Out-Null
+New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Domains\$safeHost" -Name "file" -value "1" -PropertyType dword -Force | Out-Null
+
+
+Function UnblockFiles ($path)
+{
+    # Ensure that if we're running from a UNC path, 
+    # Add hostName to the Local Intranet zone 
+    # so we don't get the "Open File - Security Warning"
+
+    If ($path -like "\\*") # Check for patrh is UNC 
+    {
+        WriteLine
+        if (Get-Command -Name "Unblock-File" -ErrorAction SilentlyContinue)
+        {
+            Write-Host -ForegroundColor White " - Unblocking executable files in $path to prevent security prompts..." -NoNewline
+            # Leverage the Unblock-File cmdlet, if available to prevent security warnings when working with language packs, CUs etc.n
+            Get-ChildItem -Path $path -Recurse | Where-Object {($_.Name -like "*.exe") -or ($_.Name -like "*.ms*") -or ($_.Name -like "*.zip") -or ($_.Name -like "*.cab")} | Unblock-File -Confirm:$false -ErrorAction SilentlyContinue
+            Write-Host -ForegroundColor White "Done."
+        }
+        $safeHost = ($path -split "\\")[2]
+
+        # Add location $safeHost to local Intranet security zone
+        Write-Host -ForegroundColor White " - Adding location `"$safeHost`" to local Intranet security zone to prevent security prompts..." -NoNewline
+        New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Domains" -Name $safeHost -ItemType Leaf -Force | Out-Null
+        New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Domains\$safeHost" -Name "file" -value "1" -PropertyType dword -Force | Out-Null
+        Write-Host -ForegroundColor White "Done."
+        WriteLine
+    }
+}
+
+
